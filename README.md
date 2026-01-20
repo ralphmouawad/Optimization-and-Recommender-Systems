@@ -1,4 +1,8 @@
-The purpose of this project was to apply stochastic optimization to build a recommendation engine. It is based on Netflix's competition in 2006, relying on matrix factorization techniques.
+I- Labs:
+HW include mathematical derivations for proving convexity, as well as algorithms for solving constrained and unconstrained optimization (general quadratic problems as well as machine learning based problems)
+
+II - Project
+The purpose of the project was to apply stochastic optimization to build a recommendation engine. It is based on Netflix's competition in 2006, relying on matrix factorization techniques.
 - We generated 2 matrices: one for user-embeddings and one for movie-embeddings, as well as 2 bias vectors. 
 - We implemented the stochastic gradient descent with L2 regularization to solve the optimization problem and recover a full and low-rank rating matrix. 
 - We can now also analyze similar users and movies based on their embedding vectors.
