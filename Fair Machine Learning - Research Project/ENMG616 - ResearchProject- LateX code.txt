@@ -1,0 +1,184 @@
+\documentclass[11pt]{extarticle}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{setspace}
+\setstretch{1.5}
+\usepackage{xcolor}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\geometry{margin=1in}
+
+\begin{document}
+
+\begin{titlepage}
+    \centering
+    \includegraphics[width=0.85\linewidth]{aub_msfea_logo.png}
+    
+    \vspace{1cm}
+    
+    \textbf{{\LARGE Department of Industrial Engineering \\ \& Management}}
+    
+    \vspace{3cm}
+    
+    \textbf{{\LARGE ENMG 616 - Advanced Optimization Techniques \& Algorithms}} \\
+    \textbf{{\LARGE Research Project - Fairness in Machine Learning }}\\
+    \textbf{\Large By:} \Large Ralph Mouawad - ID 202204667\\
+    \textbf{\Large To:} \Large Dr. Maher Nouiehed\\
+    \text{\Large November 14th, 2023}
+    
+    \vspace{3cm}
+    
+    \textbf{\textit{\Large "Fairness Beyond Disparate Treatment \& Disparate Impact: Learning Classification without Disparate Mistreatment" }} \\ 
+    \textit{By: Muhammad Bilal Zafar, Isabel Valera, Manuel Gomez Rodriguez \& Krishna P. Gummadi}
+    
+\end{titlepage}
+\restoregeometry  % Restore the original page margins
+
+\tableofcontents
+\newpage
+\section{Introduction \& Motivation}
+    Nowadays, automated data-driven decision-making systems have become integral across various industries, prominently featured in recommendation systems for retail companies or movie applications, and finance. The swift advancement of predictive analytics has, however, prompted concerns regarding potential unfairness directed at individuals with sensitive attributes, such as gender or race. Several laws are in place to address and prohibit unfair treatment based on such traits, categorizing them into two distinct types: Disparate Treatment and Disparate Impact.
+    This paper introduces a new concept of unfairness—Disparate Mistreatment, adding a nuanced perspective to the existing discourse. Let's define each type of unfairness.\\ 
+    - \textbf{Disparate Treatment:}
+     Different classifications to groups of people with the same non-sensitive attributes but different sensitive attributes. \\
+    - \textbf{Disparate Impact:} A decision-making system consistently produces outcomes that disproportionately favor or disadvantage a specific group of individuals sharing a common sensitive attribute value, more frequently than other groups. \\ 
+   - \textbf{Disparate Mistreatment}: A new concept of unfairness, occurring when the misclassification rate for a group of individuals with the same value of a sensitive attribute differs from another group with a different value of that sensitive attribute. \\
+   \textbf{Example}: 
+    We have 3 classifiers that will decide whether or not to stop pedestrians because they think they might have weapons. We have one sensitive attribute (Gender), and two non sensitive attributes (Clothing Bulge, Proximity to a crime scene). \\ 
+
+    \begin{figure}[h]
+        \centering
+        \includegraphics[width = 0.85\linewidth]{Table 1.png} \\
+        \includegraphics[width = 0.85\linewidth]{Table2.png} \\
+        \includegraphics[width = 0.85\linewidth]{Table 3.png} \\
+    \end{figure}
+    \begin{figure}
+        \centering
+        \includegraphics{Table 4.png} 
+        \caption{Explaining the type of unfairness each classifier suffers from}
+    \end{figure}
+   
+
+
+\section{Literature}
+   Many studies proposed solutions to tackle only disparate treatment and disparate impact. \\
+   But when the ground truth is provided, maybe there's an explanation for the difference in classifications between different groups of people . \\
+    Recently, Goel et al. proposed a study related to the detection of racial disparities (between blacks \& whites) in the detection of weapons with civilians. The notion of unfairness was similar to disparate mistreatment since it showed that False Positive Rate (blacks) $>$ False Positive Rate (whites) in stops.  
+   Another work by Hardt et al. suggests a method to tackle disparate mistreatment: Adjust the unfair system's probability estimates after it makes predictions. This adjustment helps the system set different decision thresholds for various sensitive attribute groups. However, this method needs sensitive attribute information at the time of decision-making, so it suffers from disparate treatment. \\
+   This paper will propose a new method to remove disparate mistreatment by minimizing the covariance (the relation) between the the sensitive feature and the output of the classifier, at a small cost of accuracy. This new method can simultaneously remove disparate treatment.
+
+\section{Problem Formulation \& Methodology}
+    In this section, we will formulate our problem along with the fairness constraints.
+
+    \noindent We aim to find a function $f(\mathbf{x})$ that maps user feature vectors $\mathbf{x} \in \mathbb{R}^{d}$ and class labels $y \in \{-1,1\}$. 
+    We need to determine a decision boundary $\boldsymbol{\theta^*} = \text{argmin}_{\theta} L(\mathbf{\theta})$ (a surface separating the data-points of different classes) using a training dataset $\mathcal{D} = \{(\mathbf{x}_i, y_i)\}$ for $i = 1$ to $N$. \\
+    Then, when we're given a new feature vector $\mathbf{x}$, the system will be able to predict whether $\hat{y} = 1 \, if \,  d_{\theta^*}(\mathbf(x)) \geq 1 \, or \, \hat{y} = -1 \, if \, d_{\theta^*}(\mathbf(x)) < 0$. \\
+    In this paper, a logistic regression model will be used. The decision boundary will be the hyperplane defined by $\mathbf{\theta}^T\mathbf{x} = 0$, and $d_{\theta}(\mathbf{x}) = \mathbf{\theta}^T\mathbf{x}$.\\
+    Consider that we have a feature vector $\mathbf{x}$ and a sensitive attribute $z = \{0,1\}$. 
+    The constraints for the three notions of fairness will be defined as follow:\\
+    - \textbf{Disparate Treatment:} $P(\hat{y} | \mathbf{x}, z) = P(\hat{y} | \mathbf{x})$.  
+    The probability that a classifier outputs a value of $\hat{y}$, given the feature vector $\mathbf{x}$, must remain the same if the sensitive attribute $z$ is also given.
+          
+
+    \noindent - \textbf{Disparate Impact:} $P(\hat{y} = 1 | z=0) = P(\hat{y} = 1 | z=1)$. The probability of getting the output $\hat{y} = 1 \, (or \, 0)$ should be the same for both values of the sensitive feature $z$. \\
+    - \textbf{Disparate Mistreatment:} The misclassification rates for different groups of people having different values of $z$ should remain the same. Here we have many misclassification measures, such as: \\ \\
+    \indent \textbf{Overall Misclassification Rate (OMR):}
+    $P(\hat{y} \neq y | z = 0) = P(\hat{y} \neq y | z = 1)$ 
+    
+    \textbf{False Positive Rate (FPR):}
+    $ P(\hat{y} \neq y | z = 0, y = -1) = P(\hat{y} \neq y | z = 1, y = -1)$ 
+    
+    \textbf{False Negative Rate (FNR):}
+     $P(\hat{y} \neq y | z = 0, y = 1) = P(\hat{y} \neq y | z = 1, y = 1)$ \\
+    
+    This paper will only tackle disparate mistreatment defined in terms of OMR, FPR and FNR. There are other types of disparate mistreatment such as False Discovery and False Omission rates (FDR \& FOR) that would be tackled in future works because they present challenges. Scenarios tackling both disparate treatment and mistreatment will also be presented in this paper. \\ \\
+    The constraint equations above are not convex, it will be hard to solve them. A new method is proposed to measure disparate mistreatment, using the covariance between the users' sensitive features ($z$), and the signed distance between the feature vectors of misclassified users and the decision boundary, denoted by $g_{\theta}(y, \mathbf{x})$.
+    \[
+    \text{Cov}(z, g_{\theta}(y, x)) = \mathbb{E}[(z - \bar{z})(g_{\theta}(y, x) - \bar{g}_{\theta}(y, x))] \approx \frac{1}{N} \sum_{(x,y,z) \in D} (z - \bar{z}) g_{\theta}(y, x) \quad 
+    \]
+    
+    
+    \noindent Regarding $g_{\theta}(y,x)$, we will write it as an approximation function of each type of unfairness.\\
+    \textbf{OMR}: $g_{\theta}(y, x) = \min(0, y \cdot d_{\theta}(x))$\\
+    \textbf{FPR}: $g_{\theta}(y, x) = \min \left(0, \frac{1 - y}{2} \cdot yd_{\theta}(x)\right)$\\
+    \textbf{FNR}: $g_{\theta}(y, x) = \min \left(0, \frac{1 + y}{2} \cdot yd_{\theta}(x)\right)$\\ 
+    We want that covariance to be close to 0 to remove the relation between the sensitive feature $z$ and the final decision of the classifier. Now, we can write the following constrained optimization problem: \\
+    \begin{align*}
+    \text{minimize } & L(\theta) \\
+    \text{subject to } & \frac{1}{N} \sum_{(x,y,z) \in D} (z - \bar{z}) g_{\theta}(y, x) \leq c \\
+    & \frac{1}{N} \sum_{(x,y,z) \in D} (z - \bar{z}) g_{\theta}(y, x) \geq -c
+    \end{align*} 
+    $c \in \Re^+ $ represents the covariance threshold that controls how adherent to disparate mistreatment the boundary should be.  \\
+    The constraints approximate fairness well, but they are still non-convex. This is why they will be converted into a \textbf{Discipline Convex-Concave Program} (DCCP) that can be solved with recent convex-concave programming techniques. \\
+    
+     $z$ is binary, which means we can split the sum into two terms, one over the subset $D_0$ where $z = 0$ and the other over the subset $D_1$ where $z = 1$. \\
+     Finally, we define \(N_0 = |D_0|\), \(N_1 = |D_1|\), and \(\bar{z} = \frac{(0 \cdot N_0) + (1 \cdot N_1)}{N}\) and our constraints can be written as:     
+    \[
+    -\frac{N_1}{N} \sum_{(x,y) \in D_0} g_{\theta}(y, x) + \frac{N_0}{N} \sum_{(x,y) \in D_1} g_{\theta}(y, x) \sim c \, (i.e, \leq or \geq).
+    \]
+    We know that $g_{\theta}(y,\mathbf{x})$ is convex in $\mathbf{\theta}$, and that will make our above formulation a convex-concave function. \\
+    Regarding our convex loss $L(\mathbf{\theta})$, we will formulate it as a \textbf{Logistic Regression Classifier}:\\
+    \begin{align*}
+    \text{minimize} \quad & -\sum_{(x,y) \in D} \log p(y_i | x_i, \theta) \\
+    \text{subject to} \quad & -\frac{N_1}{N} \sum_{(x,y) \in D_0} g_{\theta}(y, x) + \frac{N_0}{N} \sum_{(x,y) \in D_1} g_{\theta}(y, x) \leq c \\
+    & -\frac{N_1}{N} \sum_{(x,y) \in D_0} g_{\theta}(y, x) + \frac{N_0}{N} \sum_{(x,y) \in D_1} g_{\theta}(y, x) \geq -c
+    \end{align*}\\
+    \textit{Note that the above optimization problem gives us the opportunity to remove disparate mistreatment \& treatment by keeping $\mathbf{x}$ and $z$ disjoint}.
+\section{Experiments \& Results}
+    Let's quantify the Disparate Mistreatment by a decision making system:\\
+    - $D_{FPR} = P(\hat{y} \neq y|z = 0, y = -1) - P(\hat{y} \neq y|z = 1, y = -1)$ \\
+    - ${D_{FNR}} = P(\hat{y} \neq y|z = 0, y = 1) - P(\hat{y} \neq y|z = 1, y = 1)$ \\
+    We want these values to be minimized.
+    \subsection{Synthetic Dataset}
+    In this part, a synthetic dataset will be generated for each problem: 10000 binary class labels $y = \{-1,1\}$, along with the sensitive attribute $z = \{0,1\}$, and a 2-D user vector $\textbf{x}$ to each point.
+    \subsubsection{Disparate Mistreatment on FPR \textbf{or} FNR}
+        - An Unconstrained logistic classifier was trained, and got an accuracy of 0.85, but $D_{FNR}=0 \, \& \, D_{FPR}=0.19$. We're facing disparate mistreatment in terms of FPR. \\
+        We imposed the fairness constraints on FPR (with $g_{\theta}(y,\mathbf{x}) = min(0,\frac{1-y}{2}yd_{\theta}(\mathbf{x}))$.\\
+        The results obtained were:\\
+        accuracy = 0.8, $\mathbf{D_{FPR}}$=0.02 and $\mathbf{D_{FNR}}$ = 0. This method showed that it eliminates disparate mistreatment in terms of FPR but it decreases the accuracy.
+    \subsubsection{Disparate mistreatment on \textbf{both} FPR and FNR}
+        \textbf{Case 1}: $\mathbf{D_{FPR}}$ and $\mathbf{D_{FNR}}$ have opposite signs:\\
+         FPR (group A) $>$ FPR (group B), but FNR (group B) $>$ FNR (group A).\\        
+        - An Unconstrained logistic classifier gave an accuracy = 0.78, but $D_{FPR} = -0.16$ and $D_{FNR} = 0.19$. \\
+        Fairness on FPR:\\
+        new accuracy = 0.75, and there's no disparate mistreatment in terms of both FPR and FNR because when the decision boundary rotated due to the constraints, misclassified examples with $z = 1$ move to the negative class as well as well classified examples with $z=1$. This caused a decrease in FPR and an increase in FNR. \\
+        The same experiment was repeated by imposing fairness on FNR and on both FPR and FNR, and the same results were achieved. 
+        Therefore, we conclude that when $D_{FNR}$ and $D_{FPR}$ have opposite signs, it is sufficient to control disparate mistreatment on any of FPR, FNR, or both. \\  
+        \textbf{Case 2}: $\mathbf{D_{FPR}}$ and $\mathbf{D_{FNR}}$ have the same signs:\\
+        - A logistic classifier was trained without and with constraints on FPR, FNR and both. The results were as follow: \\
+        \begin{figure}[h]
+            \centering
+            \includegraphics[width=0.75\linewidth]{Table 5.png}
+        \end{figure} \\
+        We can conclude here that when $D_{FPR}$ and $D_{FNR}$ have the same sign, it is very costly to remove disparate mistreatment on both FPR and FNR because we will observe a huge decrease in the accuracy.
+        \subsubsection{Performance comparison on a synthetic dataset}
+            Three methods will be compared in this part, using a synthetic dataset:\\
+            - Method 1 proposed by the paper, that removes disparate mistreatment and disparate treatment (by assuming $\mathbf{x}$ and $z$ disjoint).\\
+            - Method 2 proposed by this paper that only removes disparate mistreatment (\textbf{x} and $z$ are not disjoint).\\
+            - Hardt method described earlier (post-processing probabilities of an unfair classifier).\\
+            - Baseline method, removing disparate mistreatment by increasing penalties on the set of misclassified data points while re-training the model until fairness is reached. \\
+            The comparison of results will tackle those obtained when the generated dataset had $D_{FPR}$ and $D_{FNR}$ with opposite signs, and FPR constraints imposed since we saw that all three constraints give the same results. \\
+            \begin{figure}[h]
+                \centering
+                \includegraphics{Table6.png}
+            \end{figure}\\
+            The results show that Baseline method doesn't remove disparate mistreatment completely and gives bad accuracy. Method 2 and Hardt's method gave the best accuracy, removed disparate mistreatment but suffer from disparate treatment. Method 1 gives a smaller accuracy (less 5\%) but removed both disparate treatment and mistreatment. \\
+
+    \subsection{Application on a real dataset}
+        A dataset was collected from ProPublica COMPAS. It includes information related to offenders' demographic features (gender, race, age). The sensitive attribute considered is race, and suffers from disparate mistreatment with $D_{FPR} and D_{FNR}$ having opposite signs. The methods used to achieve fairness are Method 2, Hardt and Baseline. \\
+        All 3 methods achieved similar accuracy (~64\%), and imposing fairness on FPR also helps decreasing unfairness on FNR.\\
+        Method 2 didn't completely remove unfairness, due to the small size of the dataset. \\
+        \begin{figure}[h]
+            \centering
+            \includegraphics{Table 7.png}
+            \caption{Results of imposing fairness constraints on both FPR and FNR for the real dataset}
+        \end{figure}
+            
+        
+\newpage            
+\section{Relation to the Class Material}
+    Most of the topics tackled in this paper are related in the class material, such as:\\
+    - Constrained Optimization: The main idea in this paper is to impose fairness constraints on our minimization problem. We covered in class how to solve constrained optimization  problems (Projected Gradient Descent, Frank-Wolfe Method...). Here the problem is formed as a Discipline Convex-Concave program and solved differently.\\
+    - Logistic regression, and we used Stochastic Gradient Descent to minimize the cross-entropy loss. (However, in this paper another method (DCCP) is used to solve it because of the fairness constraints). \\
+    - Convexity: We learned in class the definition of a convex, strongly \& strictly convex function, and the different methods to identify them. In this paper, the authors tried to make the problem convex in order to minimize the loss function. 
+\end{document}
